@@ -157,6 +157,11 @@ public class PokemonApp {
             @Override
             public void actionPerformed(ActionEvent e) {
                 String selectedType = (String) typeComboBox.getSelectedItem();
+
+                if ("unknown".equals(selectedType)) {
+                    return;
+                }
+
                 if ("Todos".equals(selectedType)) {
                     DatosTodosPokemons();
                 } else if (selectedType != null && !selectedType.isEmpty()) {
@@ -164,6 +169,7 @@ public class PokemonApp {
                 }
             }
         });
+
 
         pokemonComboBox.addActionListener(new ActionListener() {
             @Override
@@ -222,7 +228,7 @@ public class PokemonApp {
                             JsonObject typeInfo = result.getAsJsonObject();
                             String typeName = typeInfo.get("name").getAsString();
 
-                            if (isValidPokemon(typeName)) {
+                            if (!"unknown".equals(typeName)) {
                                 typeList.add(typeName);
                             }
                         }
@@ -251,6 +257,7 @@ public class PokemonApp {
             }
         }).start();
     }
+
 
 
     public static void DatosTodosPokemons() {
@@ -303,7 +310,44 @@ public class PokemonApp {
     }
 
     private static boolean isValidPokemon(String name) {
-        return !("arcanine-hisui".equals(name) || "armarouge".equals(name) || "unknown".equals(name) || "shadow".equals(name) || "hisui".equals(name));
+        List<String> novenaGeneracion = Arrays.asList(
+                "sprigatito",
+                "floragato",
+                "meowscarada",
+                "fuecoco",
+                "crocalor",
+                "skeledirge",
+                "quaxly",
+                "quaxwell",
+                "lechonk",
+                "oinkologne",
+                "dudunsparce",
+                "dudunsparce",
+                "tarountula",
+                "spidops",
+                "nymble",
+                "lokix",
+                "wo-chien",
+                "chien-pao",
+                "ting-lu",
+                "chi-yu",
+                "koraidon",
+                "miraidon",
+                "okidogi",
+                "munkidori"
+        );
+
+
+        if (novenaGeneracion.contains(name)) {
+            return false;
+        }
+
+
+        if (name.contains("hisui") || name.contains("moon")) {
+            return false;
+        }
+
+        return true;
     }
 
 
@@ -340,6 +384,9 @@ public class PokemonApp {
                                 Collections.sort(pokemonList);
 
                                 SwingUtilities.invokeLater(() -> {
+                                    pokemonComboBox.removeAllItems();
+                                    pokemonComboBox.addItem("");
+
                                     for (String pokemon : pokemonList) {
                                         pokemonComboBox.addItem(pokemon);
                                     }
@@ -363,6 +410,7 @@ public class PokemonApp {
 
         thread.start();
     }
+
 
 
 
