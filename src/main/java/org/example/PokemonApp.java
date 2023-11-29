@@ -31,7 +31,6 @@ public class PokemonApp {
     private static JLabel attributesLabel;
     private static JPanel bluePanel;
     private static JLabel officialArtworkLabel;
-
     private static int initialX;
     private static int initialY;
 
@@ -203,95 +202,104 @@ public class PokemonApp {
     }
 
     public static void TiposDatos() {
-        try {
-            URL url = new URL(API_BASE_URL + "type");
-            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-            connection.setRequestMethod("GET");
+        new Thread(() -> {
+            try {
+                URL url = new URL(API_BASE_URL + "type");
+                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                connection.setRequestMethod("GET");
 
-            if (connection.getResponseCode() == HttpURLConnection.HTTP_OK) {
-                InputStreamReader reader = new InputStreamReader(connection.getInputStream());
-                JsonElement element = JsonParser.parseReader(reader);
+                if (connection.getResponseCode() == HttpURLConnection.HTTP_OK) {
+                    InputStreamReader reader = new InputStreamReader(connection.getInputStream());
+                    JsonElement element = JsonParser.parseReader(reader);
 
-                if (element.isJsonObject()) {
-                    JsonObject typesObject = element.getAsJsonObject();
-                    JsonArray results = typesObject.getAsJsonArray("results");
+                    if (element.isJsonObject()) {
+                        JsonObject typesObject = element.getAsJsonObject();
+                        JsonArray results = typesObject.getAsJsonArray("results");
 
-                    List<String> typeList = new ArrayList<>();
+                        List<String> typeList = new ArrayList<>();
 
-                    for (JsonElement result : results) {
-                        JsonObject typeInfo = result.getAsJsonObject();
-                        String typeName = typeInfo.get("name").getAsString();
+                        for (JsonElement result : results) {
+                            JsonObject typeInfo = result.getAsJsonObject();
+                            String typeName = typeInfo.get("name").getAsString();
 
-                        if (isValidPokemon(typeName)) {
-                            typeList.add(typeName);
+                            if (isValidPokemon(typeName)) {
+                                typeList.add(typeName);
+                            }
                         }
-                    }
 
-                    Collections.sort(typeList);
+                        Collections.sort(typeList);
 
-                    typeComboBox.removeAllItems();
-                    typeComboBox.addItem("Todos");
+                        SwingUtilities.invokeLater(() -> {
+                            typeComboBox.removeAllItems();
+                            typeComboBox.addItem("Todos");
 
-                    for (String type : typeList) {
-                        typeComboBox.addItem(type);
+                            for (String type : typeList) {
+                                typeComboBox.addItem(type);
+                            }
+                        });
+
+                    } else {
+                        AppLogger.logError("Respuesta JSON inválida al obtener tipos de Pokémon", null);
                     }
                 } else {
-                    AppLogger.logError("Respuesta JSON inválida al obtener tipos de Pokémon", null);
+                    AppLogger.logError("Error al recuperar datos de tipos. Código de error HTTP: " + connection.getResponseCode(), null);
                 }
-            } else {
-                AppLogger.logError("Error al recuperar datos de tipos. Código de error HTTP: " + connection.getResponseCode(), null);
-            }
 
-            connection.disconnect();
-        } catch (Exception e) {
-            AppLogger.logError("Error al acceder PokeAPI para tipos: " + e.getMessage(), e);
-        }
+                connection.disconnect();
+            } catch (Exception e) {
+                AppLogger.logError("Error al acceder PokeAPI para tipos: " + e.getMessage(), e);
+            }
+        }).start();
     }
 
+
     public static void DatosTodosPokemons() {
-        try {
-            URL url = new URL(API_BASE_URL + POKEMON_ENDPOINT + "?limit=1000");
-            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-            connection.setRequestMethod("GET");
+        Thread thread = new Thread(() -> {
+            List<String> pokemonList = new ArrayList<>();
 
-            if (connection.getResponseCode() == HttpURLConnection.HTTP_OK) {
-                InputStreamReader reader = new InputStreamReader(connection.getInputStream());
-                JsonElement element = JsonParser.parseReader(reader);
+            try {
+                URL url = new URL(API_BASE_URL + POKEMON_ENDPOINT + "?limit=1000");
+                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                connection.setRequestMethod("GET");
 
-                if (element.isJsonObject()) {
-                    JsonObject pokemonObject = element.getAsJsonObject();
-                    JsonArray results = pokemonObject.getAsJsonArray("results");
+                if (connection.getResponseCode() == HttpURLConnection.HTTP_OK) {
+                    InputStreamReader reader = new InputStreamReader(connection.getInputStream());
+                    JsonElement element = JsonParser.parseReader(reader);
 
-                    List<String> pokemonList = new ArrayList<>();
+                    if (element.isJsonObject()) {
+                        JsonObject pokemonObject = element.getAsJsonObject();
+                        JsonArray results = pokemonObject.getAsJsonArray("results");
 
-                    for (JsonElement result : results) {
-                        JsonObject pokemonInfo = result.getAsJsonObject();
-                        String pokemonName = pokemonInfo.get("name").getAsString();
+                        for (JsonElement result : results) {
+                            JsonObject pokemonInfo = result.getAsJsonObject();
+                            String pokemonName = pokemonInfo.get("name").getAsString();
 
-                        if (isValidPokemon(pokemonName)) {
-                            pokemonList.add(pokemonName);
+                            if (isValidPokemon(pokemonName)) {
+                                pokemonList.add(pokemonName);
+                            }
                         }
-                    }
 
-                    Collections.sort(pokemonList);
-
-                    pokemonComboBox.removeAllItems();
-                    pokemonComboBox.addItem("");
-
-                    for (String pokemon : pokemonList) {
-                        pokemonComboBox.addItem(pokemon);
+                        Collections.sort(pokemonList);
+                    } else {
+                        System.err.println("JSON INVALIDO");
                     }
                 } else {
-                    System.err.println("JSON INVALIDO");
+                    System.err.println("ERROR Pokemon data. HTTP Error Code: " + connection.getResponseCode());
                 }
-            } else {
-                System.err.println("ERROR Pokemon data. HTTP Error Code: " + connection.getResponseCode());
+
+                connection.disconnect();
+            } catch (Exception e) {
+                System.err.println("ERROR AL INTENTAR ACCEDER POKEAPI: " + e.getMessage());
             }
 
-            connection.disconnect();
-        } catch (Exception e) {
-            System.err.println("ERROR AL INTENTAR ACCEDER POKEAPI: " + e.getMessage());
-        }
+            SwingUtilities.invokeLater(() -> {
+                for (String pokemon : pokemonList) {
+                    pokemonComboBox.addItem(pokemon);
+                }
+            });
+        });
+
+        thread.start();
     }
 
     private static boolean isValidPokemon(String name) {
@@ -302,57 +310,63 @@ public class PokemonApp {
 
 
     public static void CargarPokemonTipos(String type) {
-        try {
-            if (typeComboBox.getItemCount() > 0) {
-                URL url = new URL(API_BASE_URL + TYPES_ENDPOINT + type);
-                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-                connection.setRequestMethod("GET");
+        Thread thread = new Thread(() -> {
+            List<String> pokemonList = new ArrayList<>();
 
-                if (connection.getResponseCode() == HttpURLConnection.HTTP_OK) {
-                    InputStreamReader reader = new InputStreamReader(connection.getInputStream());
-                    JsonElement element = JsonParser.parseReader(reader);
+            try {
+                if (typeComboBox.getItemCount() > 0) {
+                    URL url = new URL(API_BASE_URL + TYPES_ENDPOINT + type);
+                    HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                    connection.setRequestMethod("GET");
 
-                    if (element.isJsonObject()) {
-                        JsonObject typeObject = element.getAsJsonObject();
-                        JsonArray pokemonArray = typeObject.getAsJsonArray("pokemon");
+                    if (connection.getResponseCode() == HttpURLConnection.HTTP_OK) {
+                        InputStreamReader reader = new InputStreamReader(connection.getInputStream());
+                        JsonElement element = JsonParser.parseReader(reader);
 
-                        if (pokemonArray != null) {
-                            List<String> pokemonList = new ArrayList<>();
+                        if (element.isJsonObject()) {
+                            JsonObject typeObject = element.getAsJsonObject();
+                            JsonArray pokemonArray = typeObject.getAsJsonArray("pokemon");
 
-                            for (JsonElement pokemonEntry : pokemonArray) {
-                                JsonObject pokemonInfo = pokemonEntry.getAsJsonObject();
-                                String pokemonName = pokemonInfo.getAsJsonObject("pokemon").get("name").getAsString();
+                            if (pokemonArray != null) {
+                                for (JsonElement pokemonEntry : pokemonArray) {
+                                    JsonObject pokemonInfo = pokemonEntry.getAsJsonObject();
+                                    String pokemonName = pokemonInfo.getAsJsonObject("pokemon").get("name").getAsString();
 
-
-                                if (!"arcanine-hisui".equals(pokemonName) && !"armarouge".equals(pokemonName) && !"unknown".equals(pokemonName) && !"shadow".equals(pokemonName)) {
-                                    pokemonList.add(pokemonName);
+                                    if (!"arcanine-hisui".equals(pokemonName) && !"armarouge".equals(pokemonName) && !"unknown".equals(pokemonName) && !"shadow".equals(pokemonName)) {
+                                        pokemonList.add(pokemonName);
+                                    }
                                 }
-                            }
 
-                            Collections.sort(pokemonList);
+                                Collections.sort(pokemonList);
 
-                            pokemonComboBox.removeAllItems();
-                            pokemonComboBox.addItem("");
-
-                            for (String pokemon : pokemonList) {
-                                pokemonComboBox.addItem(pokemon);
+                                SwingUtilities.invokeLater(() -> {
+                                    for (String pokemon : pokemonList) {
+                                        pokemonComboBox.addItem(pokemon);
+                                    }
+                                });
+                            } else {
+                                System.err.println("No hay información de Pokémon para el tipo: " + type);
                             }
                         } else {
-                            System.err.println("No hay información de Pokémon para el tipo: " + type);
+                            System.err.println("JSON INVALIDO");
                         }
                     } else {
-                        System.err.println("JSON INVALIDO");
+                        System.err.println("ERROR Pokemon data. HTTP Error Code: " + connection.getResponseCode());
                     }
-                } else {
-                    System.err.println("ERROR Pokemon data. HTTP Error Code: " + connection.getResponseCode());
-                }
 
-                connection.disconnect();
+                    connection.disconnect();
+                }
+            } catch (Exception e) {
+                System.err.println("ERROR AL INTENTAR ACCEDER POKEAPI: " + e.getMessage());
             }
-        } catch (Exception e) {
-            System.err.println("ERROR AL INTENTAR ACCEDER POKEAPI: " + e.getMessage());
-        }
+        });
+
+        thread.start();
     }
+
+
+
+
 
     private static void MostrarImagenPokemon(String input) {
         if (input != null) {
@@ -508,19 +522,29 @@ public class PokemonApp {
 
     private static void closePokemonApp() {
         PokedexFrame.dispose();
+        System.exit(0);
     }
 
     private static void MostrarAtributosPokemon(JsonObject pokemonObject) {
         StringBuilder attributes = new StringBuilder("<html>");
 
         attributes.append("<font color='black'><b><font size='5'>Nombre:</font></b></font> ").append("<font color='black' size='5'>").append(pokemonObject.get("name").getAsString()).append("</font>").append("<br>");
-        attributes.append("<font color='black'><b><font size='5'>Peso:</font></b></font> ").append("<font color='black' size='5'>").append(pokemonObject.get("weight").getAsInt()).append(" kg</font>").append("<br>");
-        attributes.append("<font color='black'><b><font size='5'>Altura:</font></b></font> ").append("<font color='black' size='5'>").append(pokemonObject.get("height").getAsInt()).append(" cm</font>").append("<br>");
+        double pesoHectogramos = pokemonObject.get("weight").getAsInt();
 
+        double pesoKilogramos = pesoHectogramos / 10;
+
+
+        attributes.append("<font color='black'><b><font size='5'>Peso:</font></b></font> ").append("<font color='black' size='5'>").append(pesoKilogramos).append(" kg ").append("</font>").append("<br>");
+
+        double alturaDecimetros = pokemonObject.get("height").getAsInt();
+
+        double alturaMetros = alturaDecimetros / 10;
+        double alturaCentimetros = alturaDecimetros * 10;
+
+        attributes.append("<font color='black'><b><font size='5'>Altura:</font></b></font> ").append("<font color='black' size='5'>").append(alturaCentimetros).append(" cm</font>").append("<br>");
 
         int baseExperience = pokemonObject.get("base_experience").getAsInt();
         attributes.append("<font color='black'><b><font size='5'>Experiencia Base:</font></b></font> ").append("<font color='black' size='5'>").append(baseExperience).append("</font>").append(" puntos<br>");
-
 
         JsonArray abilitiesArray = pokemonObject.getAsJsonArray("abilities");
         if (abilitiesArray != null && abilitiesArray.size() > 0) {
