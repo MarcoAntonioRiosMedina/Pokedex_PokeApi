@@ -39,7 +39,7 @@ public class PokemonApp {
         PokedexFrame.setUndecorated(true);
         PokedexFrame.setSize(820, 850);
         PokedexFrame.setLayout(null);
-        PokedexFrame.getContentPane().setBackground(new Color(255, 51, 51));
+        PokedexFrame.getContentPane().setBackground(new Color(204, 0, 0));
         PokedexFrame.setLocationRelativeTo(null);
 
         PokedexFrame.getRootPane().setBorder(BorderFactory.createLineBorder(Color.BLACK, 3));
@@ -528,23 +528,37 @@ public class PokemonApp {
     private static void MostrarAtributosPokemon(JsonObject pokemonObject) {
         StringBuilder attributes = new StringBuilder("<html>");
 
-        attributes.append("<font color='black'><b><font size='5'>Nombre:</font></b></font> ").append("<font color='black' size='5'>").append(pokemonObject.get("name").getAsString()).append("</font>").append("<br>");
-        double pesoHectogramos = pokemonObject.get("weight").getAsInt();
+        attributes.append("<font color='black'><b><font size='5'>Nombre:</font></b></font> ")
+                .append("<font color='black' size='5'>")
+                .append(capitalizeFirstLetter(pokemonObject.get("name").getAsString()))
+                .append("</font>")
+                .append("<br>");
 
+        double pesoHectogramos = pokemonObject.get("weight").getAsInt();
         double pesoKilogramos = pesoHectogramos / 10;
 
-
-        attributes.append("<font color='black'><b><font size='5'>Peso:</font></b></font> ").append("<font color='black' size='5'>").append(pesoKilogramos).append(" kg ").append("</font>").append("<br>");
+        attributes.append("<font color='black'><b><font size='5'>Peso:</font></b></font> ")
+                .append("<font color='black' size='5'>")
+                .append(pesoKilogramos)
+                .append(" kg ")
+                .append("</font>")
+                .append("<br>");
 
         double alturaDecimetros = pokemonObject.get("height").getAsInt();
-
-        double alturaMetros = alturaDecimetros / 10;
         double alturaCentimetros = alturaDecimetros * 10;
 
-        attributes.append("<font color='black'><b><font size='5'>Altura:</font></b></font> ").append("<font color='black' size='5'>").append(alturaCentimetros).append(" cm</font>").append("<br>");
+        attributes.append("<font color='black'><b><font size='5'>Altura:</font></b></font> ")
+                .append("<font color='black' size='5'>")
+                .append(alturaCentimetros)
+                .append(" cm</font>")
+                .append("<br>");
 
         int baseExperience = pokemonObject.get("base_experience").getAsInt();
-        attributes.append("<font color='black'><b><font size='5'>Experiencia Base:</font></b></font> ").append("<font color='black' size='5'>").append(baseExperience).append("</font>").append(" puntos<br>");
+        attributes.append("<font color='black'><b><font size='5'>Experiencia Base:</font></b></font> ")
+                .append("<font color='black' size='5'>")
+                .append(baseExperience)
+                .append("</font>")
+                .append(" puntos<br>");
 
         JsonArray abilitiesArray = pokemonObject.getAsJsonArray("abilities");
         if (abilitiesArray != null && abilitiesArray.size() > 0) {
@@ -555,7 +569,7 @@ public class PokemonApp {
                 attributes.append("<font color='black' size='5'>").append(abilityName).append("</font>").append(", ");
             }
             attributes.delete(attributes.length() - 2, attributes.length());
-            attributes.append("<br>");
+            attributes.append("<br><br>");
         }
 
 
@@ -569,7 +583,7 @@ public class PokemonApp {
                 attributes.append("<font color='black' size='5'>").append(statName).append(": ").append(statValue).append("</font>").append(", ");
             }
             attributes.delete(attributes.length() - 2, attributes.length());
-            attributes.append("<br>");
+            attributes.append("<br><br>");
         }
 
         JsonArray typesArray = pokemonObject.getAsJsonArray("types");
@@ -581,7 +595,7 @@ public class PokemonApp {
                 attributes.append("<font color='black' size='5'>").append(typeName).append("</font>").append(", ");
             }
             attributes.delete(attributes.length() - 2, attributes.length());
-            attributes.append("<br>");
+            attributes.append("<br><br>");
         }
 
 
@@ -593,11 +607,18 @@ public class PokemonApp {
                 attributes.append("<font color='black' size='5'>").append(eggGroupName).append("</font>").append(", ");
             }
             attributes.delete(attributes.length() - 2, attributes.length());
-            attributes.append("<br>");
+            attributes.append("<br><br>");
         }
         attributes.append("</html>");
 
         attributesLabel.setText(attributes.toString());
+    }
+
+    private static String capitalizeFirstLetter(String input) {
+        if (input == null || input.isEmpty()) {
+            return input;
+        }
+        return input.substring(0, 1).toUpperCase() + input.substring(1);
     }
 
     private static String obtenerTipoPokemon(JsonObject pokemonObject) {
@@ -637,6 +658,3 @@ public class PokemonApp {
         tipoPokemonLabel.setIcon(null);
     }
 }
-
-
-
